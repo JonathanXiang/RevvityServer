@@ -5,7 +5,7 @@ import csv
 import win32com.client
 
 class RevvityLiquidHandler:
-    def __init__(self, janus_exe_path: str = r"C:\path\to\JANUS.exe", protocol_dir: str = r"C:\path\to\janus", parameter_file=r"C:\path\to\params.csv"):
+    def __init__(self, janus_exe_path: str = r"C:\Packard\Janus\Bin\JANUS.exe", protocol_dir: str = r"C:\Packard\Janus\Protocols", parameter_file=r"C:\path\to\params.csv"):
         self.janus_exe_path = janus_exe_path
         self.protocol_dir = protocol_dir
         self.parameter_file = parameter_file
