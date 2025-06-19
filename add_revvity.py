@@ -47,12 +47,12 @@ def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
         handler.set_parameters(param_dict)
         status_variable.set_value("Parameters updated")
         return []
-    
-    revvity_obj.add_method(ns_idx, "UpdateStatus",     _update_status,     [], [])
-    revvity_obj.add_method(ns_idx, "GetProtocols",     _get_protocols,     [], [ua.VariantType.String])
-    revvity_obj.add_method(ns_idx, "RunProtocol",     _run_protocol,     [ua.VariantType.String], [])
-    revvity_obj.add_method(ns_idx, "GetParameters",     _get_parameters,     [], [ua.VariantType.String])
-    revvity_obj.add_method(ns_idx, "UpdateParameters",     _update_parameters,     [ua.VariantType.String], [])
+
+    revvity_obj.add_method(ns_idx, "UpdateStatus",     _update_status,     [], []).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "GetProtocols",     _get_protocols,     [], [ua.VariantType.String]).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "RunProtocol",     _run_protocol,     [ua.VariantType.String], []).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "GetParameters",     _get_parameters,     [], [ua.VariantType.String]).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "UpdateParameters",     _update_parameters,     [ua.VariantType.String], []).set_modelling_rule(True)
 
     return revvity_obj
 
