@@ -34,10 +34,10 @@ class RevvityLiquidHandler:
             "stderr": result.stderr
         }
 
-    def get_parameters(self):
+    def get_parameters(self, param_file):
         parameters = {}
         try:
-            with open(self.parameter_file, newline='') as csvfile:
+            with open(param_file, newline='') as csvfile:
                 dialect = csv.Sniffer().sniff(csvfile.read(1024))
                 csvfile.seek(0)
                 reader = csv.DictReader(csvfile, dialect=dialect)
@@ -48,9 +48,9 @@ class RevvityLiquidHandler:
             parameters = {"error": str(e)}
         return parameters
 
-    def set_parameters(self, new_params: dict):
+    def set_parameters(self, new_params: dict, param_file):
         try:
-            with open(self.parameter_file, 'w', newline='') as csvfile:
+            with open(param_file, 'w', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=new_params.keys())
                 writer.writeheader()
                 writer.writerow(new_params)
