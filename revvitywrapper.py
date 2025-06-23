@@ -34,19 +34,19 @@ class RevvityLiquidHandler:
             "stderr": result.stderr
         }
 
-    def get_parameters(self, param_file):
-        parameters = {}
+    def get_parameters(self, param_file, column_index: int = 0):
+        values = []
         try:
             with open(param_file, newline='') as csvfile:
-                dialect = csv.Sniffer().sniff(csvfile.read(1024))
-                csvfile.seek(0)
-                reader = csv.DictReader(csvfile, dialect=dialect)
+                reader = csv.reader(csvfile)
                 for row in reader:
-                    parameters.update(row)
-                    break
+                    if column_index < len(row):
+                        values.append(row[column_index])
+                    else:
+                        values.append(None)
         except Exception as e:
             parameters = {"error": str(e)}
-        return parameters
+        return values
 
     def set_parameters(self, new_params: dict, param_file):
         try:

@@ -36,9 +36,10 @@ def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
         _update_status(parent)
         return []
     
-    def _get_parameters(parent, param_variant):
+    def _get_parameters(parent, param_variant, column_variant):
         param_file = param_variant.Value
-        parameters = handler.get_parameters(param_file)
+        column = column_variant.Value
+        parameters = handler.get_parameters(param_file, column)
         jsonstr = json.dumps(parameters)
         return [ua.Variant(jsonstr, ua.VariantType.String)]
     
@@ -53,7 +54,7 @@ def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
     revvity_obj.add_method(ns_idx, "UpdateStatus",     _update_status,     [], []).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "GetProtocols",     _get_protocols,     [], [ua.VariantType.String]).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "RunProtocol",     _run_protocol,     [ua.VariantType.String], []).set_modelling_rule(True)
-    revvity_obj.add_method(ns_idx, "GetParameters",     _get_parameters,     [ua.VariantType.String], [ua.VariantType.String]).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "GetParameters",     _get_parameters,     [ua.VariantType.String, ua.VariantType.Int32], [ua.VariantType.String]).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "UpdateParameters",     _update_parameters,     [ua.VariantType.String, ua.VariantType.String], []).set_modelling_rule(True)
 
     return revvity_obj
