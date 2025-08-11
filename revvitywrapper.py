@@ -5,7 +5,7 @@ import csv
 import win32com.client
 
 class RevvityLiquidHandler:
-    def __init__(self, janus_exe_path: str = r"C:\Packard\Janus\Bin\JANUS.exe", protocol_dir: str = r"C:\Packard\Janus\Protocols", parameter_file=r"C:\path\to\params.csv"):
+    def __init__(self, janus_exe_path: str = r"C:\Packard\Janus\bin\JANUS.exe", protocol_dir: str = r"C:\Packard\Janus\Protocols", parameter_file=r"C:\path\to\params.csv"):
         self.janus_exe_path = janus_exe_path
         self.protocol_dir = protocol_dir
         self.parameter_file = parameter_file
@@ -34,23 +34,23 @@ class RevvityLiquidHandler:
             "stderr": result.stderr
         }
 
-    def get_parameters(self, param_file, column_index: int = 0):
-        values = []
+    def get_parameters(self):
+        parameters = {}
         try:
-            with open(param_file, newline='') as csvfile:
-                reader = csv.reader(csvfile)
+            with open(self.parameter_file, newline='') as csvfile:
+                dialect = csv.Sniffer().sniff(csvfile.read(1024))
+                csvfile.seek(0)
+                reader = csv.DictReader(csvfile, dialect=dialect)
                 for row in reader:
-                    if column_index < len(row):
-                        values.append(row[column_index])
-                    else:
-                        values.append(None)
+                    parameters.update(row)
+                    break
         except Exception as e:
             parameters = {"error": str(e)}
-        return values
+        return parameters
 
-    def set_parameters(self, new_params: dict, param_file):
+    def set_parameters(self, new_params: dict):
         try:
-            with open(param_file, 'w', newline='') as csvfile:
+            with open(self.parameter_file, 'w', newline='') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=new_params.keys())
                 writer.writeheader()
                 writer.writerow(new_params)
@@ -76,3 +76,27 @@ class RevvityLiquidHandler:
             return status_summary
         except Exception as e:
             return {"Error": str(e)}
+
+    def count_tips_used(self):
+        try:
+            log_file = r"C:\Packard\Janus\Bin\dt_temp"
+            tips_used = 0
+            with open(log_file, "r") as f:
+                for line in f:
+                    if line.strip().upper() == "X":
+                        tips_used += 1
+            return tips_used
+        except Exception as e:
+            return {"error": str(e)}
+        
+    def count_tips_available(self):
+        try:
+            log_file = r"C:\Packard\Janus\Bin\dt_temp"
+            tips_avail = 0
+            with open(log_file, "r") as f:
+                for line in f:
+                    if line.strip().upper() == "Y":
+                        tips_avail += 1
+            return tips_avail
+        except Exception as e:
+            return {"error": str(e)}
