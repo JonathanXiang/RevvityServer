@@ -3,18 +3,37 @@ import subprocess
 import os
 import csv
 import win32com.client
+import os, re, json, csv
 
 class RevvityLiquidHandler:
-    def __init__(self, janus_exe_path: str = r"C:\Packard\Janus\bin\JANUS.exe", protocol_dir: str = r"C:\Packard\Janus\Protocols", parameter_file=r"C:\path\to\params.csv"):
+
+    COORD_RE = re.compile(r'([A-G])\s*([1-9])', re.IGNORECASE)
+
+    def __init__(self, janus_exe_path: str = r"C:\Packard\Janus\Bin\JANUS.exe", protocol_dir: str = r"C:\Packard\Janus\Protocols", parameter_file=r"C:\path\to\params.csv", dt_folder=r"C:\Packard\Janus\Bin\dt_temp"):
         self.janus_exe_path = janus_exe_path
         self.protocol_dir = protocol_dir
         self.parameter_file = parameter_file
         self.parameters = {}
+        self.dt_folder = dt_folder
+        self._tip_availability = {}
+        
         try:
             self.winp = win32com.client.Dispatch("WinPREP.Auto")
         except Exception as e:
             self.winp = None
             self._status = f"Error: {e}"
+
+    def _extract_coord_from_filename(self, filename: str) -> str | None:
+        m = self.COORD_RE.search(os.path.basename(filename))
+        return f"{m.group(1).upper()}{m.group(2)}" if m else None
+
+    def _count_available_in_dt(self, dt_path: str) -> int:
+        count = 0
+        with open(dt_path, "r") as f:
+            for line in f:
+                if line.strip().upper() == "Y":
+                    count += 1
+        return count
 
     def get_protocols(self):
         protocols = []
@@ -76,27 +95,35 @@ class RevvityLiquidHandler:
             return status_summary
         except Exception as e:
             return {"Error": str(e)}
-
-    def count_tips_used(self):
-        try:
-            log_file = r"C:\Packard\Janus\Bin\dt_temp"
-            tips_used = 0
-            with open(log_file, "r") as f:
-                for line in f:
-                    if line.strip().upper() == "X":
-                        tips_used += 1
-            return tips_used
-        except Exception as e:
-            return {"error": str(e)}
         
-    def count_tips_available(self):
-        try:
-            log_file = r"C:\Packard\Janus\Bin\dt_temp"
-            tips_avail = 0
-            with open(log_file, "r") as f:
-                for line in f:
-                    if line.strip().upper() == "Y":
-                        tips_avail += 1
-            return tips_avail
-        except Exception as e:
-            return {"error": str(e)}
+    def _find_dt_for_coord(self, folder: str, coord: str) -> str | None:
+        token = coord.upper()
+        for fn in os.listdir(folder):
+            if not fn.lower().endswith(".dt"):
+                continue
+            name = os.path.splitext(fn)[0].upper()
+            if token in re.findall(r'[A-G][1-9]', name):
+                return os.path.join(folder, fn)
+        return None
+
+    def refresh_tip_availability(self) -> dict:
+        if not os.path.isdir(self.dt_folder):
+            raise FileNotFoundError(f"Folder not found: {self.dt_folder}")
+
+        new_state = {}
+        for fn in os.listdir(self.dt_folder):
+            if not fn.lower().endswith(".dt"):
+                continue
+
+            coord = self._extract_coord_from_filename(fn)
+            if not coord:
+                continue
+
+            tray_number = len(new_state) + 1
+            dt_path = os.path.join(self.dt_folder, fn)
+            available = self._count_available_in_dt(dt_path)
+
+            new_state[str(tray_number)] = {coord: available}
+
+        self._tip_availability = new_state
+        return self._tip_availability

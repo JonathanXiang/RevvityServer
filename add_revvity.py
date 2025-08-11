@@ -3,11 +3,14 @@ from opcua import ua
 import time
 import json
 from revvitywrapper import RevvityLiquidHandler
+import os, re
 
+COORD_RE = re.compile(r'([A-G])\s*([1-9])', re.IGNORECASE)
 
 def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
     revvity_obj = parent.add_object(ns_idx, name)
     status_variable = revvity_obj.add_variable(ns_idx, "Status", "Initializing")
+    tip_avail_var = revvity_obj.add_variable(ns_idx, "TipAvailability", "{}")
 
     handler = RevvityLiquidHandler()
 
@@ -48,27 +51,26 @@ def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
         status_variable.set_value("Parameters updated")
         return []
     
-    def _count_tips_used(parent):
-        result = handler.count_tips_used()
-        if isinstance(result, dict) and "error" in result:
-            status_variable.set_value(result["error"])
-            return [ua.Variant(-1, ua.VariantType.Int32)]
-        return [ua.Variant(result, ua.VariantType.Int32)]
+    def _get_tip_availability(_parent):
+        return [tip_avail_var.get_value()]
     
-    def _count_tips_available(parent):
-        result = handler.count_tips_available()
-        if isinstance(result, dict) and "error" in result:
-            status_variable.set_value(result["error"])
-            return [ua.Variant(-1, ua.VariantType.Int32)]
-        return [ua.Variant(result, ua.VariantType.Int32)]
+    def _update_tip_availability(_parent):
+        try:
+            state = handler.refresh_tip_availability()
+            tip_avail_var.set_value(json.dumps(state))
+            status_variable.set_value(f"Updated tips from {handler.dt_folder}")
+            return [True]
+        except Exception as e:
+            status_variable.set_value(f"UpdateTipAvailability error: {e}")
+            return [False]
     
     revvity_obj.add_method(ns_idx, "UpdateStatus",     _update_status,     [], []).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "GetProtocols",     _get_protocols,     [], [ua.VariantType.String]).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "RunProtocol",     _run_protocol,     [ua.VariantType.String], []).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "GetParameters",     _get_parameters,     [], [ua.VariantType.String]).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "UpdateParameters",     _update_parameters,     [ua.VariantType.String], []).set_modelling_rule(True)
-    revvity_obj.add_method(ns_idx, "CountTipsUsed", _count_tips_used, [], [ua.VariantType.Int32]).set_modelling_rule(True)
-    revvity_obj.add_method(ns_idx, "CountTipsAvailable", _count_tips_available, [], [ua.VariantType.Int32]).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "GetTipAvailability", _get_tip_availability, [], [ua.VariantType.String]).set_modelling_rule(True)
+    revvity_obj.add_method(ns_idx, "UpdateTipAvailability", _update_tip_availability, [], [ua.VariantType.Boolean]).set_modelling_rule(True)
 
     return revvity_obj
 
