@@ -31,7 +31,7 @@ def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
     
     def _get_protocols(parent):
         protocols = handler.get_protocols()
-        return [ua.Variant(p, ua.VariantType.String) for p in protocols]
+        return [ua.Variant(protocols, ua.VariantType.String)]
     
     def _run_protocol(parent, protocol_variant):
         protocol = protocol_variant.Value
