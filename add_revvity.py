@@ -52,17 +52,17 @@ def add_revvity(ns_idx, parent, name: str = "RevvityHandler"):
         return []
     
     def _get_tip_availability(_parent):
-        return [tip_avail_var.get_value()]
+        return [ua.Variant(tip_avail_var.get_value(), ua.VariantType.String)]
     
     def _update_tip_availability(_parent):
         try:
             state = handler.refresh_tip_availability()
             tip_avail_var.set_value(json.dumps(state))
             status_variable.set_value(f"Updated tips from {handler.dt_folder}")
-            return [True]
+            return [ua.Variant(True, ua.VariantType.Boolean)]
         except Exception as e:
             status_variable.set_value(f"UpdateTipAvailability error: {e}")
-            return [False]
+            return [ua.Variant(False, ua.VariantType.Boolean)]
     
     revvity_obj.add_method(ns_idx, "UpdateStatus",     _update_status,     [], []).set_modelling_rule(True)
     revvity_obj.add_method(ns_idx, "GetProtocols",     _get_protocols,     [], [ua.VariantType.String]).set_modelling_rule(True)
